@@ -12,13 +12,14 @@ class ForCompNestedLoop {
   }
 
   def testNestedForCompLoop : Unit = {
-    val vaps = (for {
+    val vaps = for {
       vapType <- vapTypes
       radio <- radios
-      vap <- getVap(vapType, radio)
+      vap = getVap(vapType, radio)
       if isVapConfigSupported(vap)
-    } yield (vapType, radio, vap))
+    } yield (vapType, radio, vap)
   }
+
 }
 
 
