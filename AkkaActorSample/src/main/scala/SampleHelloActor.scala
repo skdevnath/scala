@@ -13,5 +13,4 @@ object Main extends App {
   helloActor ! "hello"
   helloActor ! "buenos dias"
   // shut down the system
-  system.wait()
 }

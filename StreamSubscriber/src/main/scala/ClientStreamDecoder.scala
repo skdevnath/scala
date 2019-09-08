@@ -19,13 +19,13 @@ class ClientActor(address: InetSocketAddress, actorSystem: ActorSystem) extends 
       actorSystem.terminate()
     case Connected(remote, local) =>
       println("Successfully connected to " + address)
-      // Send a sample sandip message
       val connection = sender()
-      connection ! Write(ByteString("Just for test"))
       connection ! Register(self)
+      // Send a sample sandip message
+      connection ! Write(ByteString("Just for test"))
       context become {
         case Received(data) =>
-          println(data.decodeString("US-ASCII"))
+          println("Server response:" + data.decodeString("US-ASCII"))
         case _: ConnectionClosed =>
           connection ! "connection closed"
           context stop self

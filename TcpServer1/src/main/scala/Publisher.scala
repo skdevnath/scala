@@ -29,6 +29,7 @@ class TCPConnectionHandler extends Actor {
   override def receive: Actor.Receive = {
     case Received(data) =>
       val decoded = data.utf8String
+      println("Server: Rxed data:" + decoded)
       sender() ! Write(ByteString(s"You told us: $decoded"))
     case message: ConnectionClosed =>
       println("Connection has been closed")
@@ -41,3 +42,4 @@ object Server extends App {
   val system = ActorSystem()
   val tcpserver = system.actorOf(Props(classOf[TCPConnectionManager], "localhost", 8080))
 }
+
