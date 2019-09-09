@@ -1,11 +1,13 @@
 package chatapp.client
 
 import java.net.InetSocketAddress
-
-import akka.actor.{Actor, ActorSystem, Props, Kill}
+import akka.actor.{Actor, ActorSystem, Kill, Props}
 import akka.io.Tcp._
+import _root_.Message.{MessageA, MessageEnvalop}
 import akka.io.{IO, Tcp}
+import akka.serialization.SerializationExtension
 import akka.util.ByteString
+import scala.util.Try
 
 
 class ClientActor(address: InetSocketAddress, actorSystem: ActorSystem) extends Actor {
@@ -25,12 +27,23 @@ class ClientActor(address: InetSocketAddress, actorSystem: ActorSystem) extends 
       connection ! Write(ByteString("Just for test"))
       context become {
         case Received(data) =>
-          println("Server response:" + data.decodeString("US-ASCII"))
+          // Get the Serialization Extension
+          val serialization = SerializationExtension(Client.system)
+          val serializer = serialization.findSerializerFor(MessageEnvalop)
+          // Turn it back into an object
+          val messageEnvalop = maybeT[MessageEnvalop](serializer.fromBinary(data.toByteBuffer.array(), manifest = Some(classOf[MessageEnvalop])))
+
+          var respStr = StringBuilder.newBuilder
+          messageEnvalop.foreach(x => x.messagesA.foreach(a => respStr.append(MessageA.toString(a))))
+          println("Server response:" + respStr)
         case _: ConnectionClosed =>
           connection ! "connection closed"
           context stop self
       }
   }
+
+  @inline def maybeT[T] ( a: Any /*Option[T]*/ ) : Option[T]= Try(a.asInstanceOf[T]).toOption
+
 }
 
 object Client extends App {

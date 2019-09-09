@@ -1,0 +1,15 @@
+[
+  {
+    "group": "Update",
+    "events": [
+      {
+        "eventId": 123,
+        "attributeIndex": 54
+      },
+      {
+        "eventId": 234,
+        "attributeIndex": 78
+      }
+    ]
+  }
+]
