@@ -3,7 +3,7 @@ package chatapp.client
 import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorSystem, Kill, Props}
 import akka.io.Tcp._
-import _root_.Message.{MessageA, MessageEnvalop}
+import _root_.Message.{MessageA, MessageEnvelope}
 import akka.io.{IO, Tcp}
 import akka.serialization.SerializationExtension
 import akka.util.ByteString
@@ -29,9 +29,9 @@ class ClientActor(address: InetSocketAddress, actorSystem: ActorSystem) extends 
         case Received(data) =>
           // Get the Serialization Extension
           val serialization = SerializationExtension(Client.system)
-          val serializer = serialization.findSerializerFor(MessageEnvalop)
+          val serializer = serialization.findSerializerFor(MessageEnvelope)
           // Turn it back into an object
-          val messageEnvalop = maybeT[MessageEnvalop](serializer.fromBinary(data.toByteBuffer.array(), manifest = Some(classOf[MessageEnvalop])))
+          val messageEnvalop = maybeT[MessageEnvelope](serializer.fromBinary(data.toByteBuffer.array(), manifest = Some(classOf[MessageEnvelope])))
 
           var respStr = StringBuilder.newBuilder
           messageEnvalop.foreach(x => x.messagesA.foreach(a => respStr.append(MessageA.toString(a))))
