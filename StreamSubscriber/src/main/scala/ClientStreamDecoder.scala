@@ -1,9 +1,10 @@
 package sandip.client
 
+import HashDb.EventProcessor
 import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorSystem, Kill, Props}
 import akka.io.Tcp._
-import _root_.Message.{MessageA, MessageEnvelope}
+import _root_.Message.{MessageA, MessageB, MessageEnvelope}
 import akka.io.{IO, Tcp}
 import akka.serialization.SerializationExtension
 import akka.util.ByteString
@@ -32,11 +33,15 @@ class ClientActor(address: InetSocketAddress, actorSystem: ActorSystem) extends 
           val serializer = serialization.findSerializerFor(MessageEnvelope)
           // Turn it back into an object
           val messageEnvalopOpt = maybeT[MessageEnvelope](serializer.fromBinary(data.toByteBuffer.array(), manifest = Some(classOf[MessageEnvelope])))
-
           var respStr = StringBuilder.newBuilder
-          messageEnvalopOpt.foreach(x => x.messagesA.foreach(a => respStr.append(MessageA.toString(a))))
-          println("Server response:" + respStr)
           messageEnvalopOpt.foreach { messageEnvalop =>
+            respStr.append("\nMessageA:")
+            messageEnvalop.messagesA.foreach(a => respStr.append(MessageA.toString(a)))
+            respStr.append("\nMessageB:")
+            messageEnvalop.messagesB.foreach(b => respStr.append(MessageB.toString(b)))
+            println("Server response:" + respStr)
+
+            println("Output:")
             messageEnvalop.messagesA.foreach(a => EventProcessor.processMessage(a))
             messageEnvalop.messagesB.foreach(b => EventProcessor.processMessage(b))
           }

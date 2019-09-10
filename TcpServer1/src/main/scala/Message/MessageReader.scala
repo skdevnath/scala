@@ -12,4 +12,12 @@ object MessageReader {
     val jValue = liftweb.json.parse(msgAfileContents)
     jValue.extract[Array[MessageA]]
   }
+
+  val messageBFilename = "/Users/sandip/tmp/scala/TcpServer1/src/main/resources/MessageB.json"
+  val msgBfileContents = Source.fromFile(messageBFilename).getLines.mkString
+  def getMessageB: Array[MessageB] = {
+    implicit val formats = DefaultFormats
+    val jValue = liftweb.json.parse(msgBfileContents)
+    jValue.extract[Array[MessageB]]
+  }
 }

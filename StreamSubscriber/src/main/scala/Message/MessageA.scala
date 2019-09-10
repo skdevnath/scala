@@ -23,7 +23,7 @@ case class Event(eventId: Int, attributeIndex: Int) extends Serializable
 case class MessageA(group: String, events: Array[Event]) extends Serializable
 
 object MessageA {
-  def toString(messageA: MessageA): String = {
+  def toString(messageA: MessageA) = {
     val stringBuilder = StringBuilder.newBuilder
     stringBuilder.append(s"\n{ group: ${messageA.group}")
     messageA.events.foreach{ e =>

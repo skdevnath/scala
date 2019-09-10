@@ -3,7 +3,7 @@ import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.io._
 import akka.io.Tcp._
-import _root_.Message.{MessageA, MessageEnvelope, MessageReader}
+import _root_.Message.{MessageA, MessageB, MessageEnvelope, MessageReader}
 import akka.serialization.SerializationExtension
 import akka.util.ByteString
 
@@ -18,6 +18,9 @@ class ConnectionManager(address: String, port: Int) extends Actor {
       // Sandip: remove following
       val messagesA = MessageReader.getMessageA
       messagesA.foreach(a => println(MessageA.toString(a)))
+      val messagesB = MessageReader.getMessageB
+      messagesB.foreach(b => println(MessageB.toString(b)))
+
     case Connected(remote, local) =>
       println("Connected")
       val handler = context.actorOf(Props[ConnectionHandler])
@@ -32,7 +35,8 @@ class ConnectionHandler extends Actor {
       val decoded = data.utf8String
       println("Server: data rx:" + decoded)
       val messagesA = MessageReader.getMessageA
-      val messageEnvalop = MessageEnvelope(messagesA = messagesA.toSeq, messagesB = Seq.empty)
+      val messagesB = MessageReader.getMessageB
+      val messageEnvalop = MessageEnvelope(messagesA = messagesA.toSeq, messagesB = messagesB.toSeq)
 
       val serialization = SerializationExtension(Server.system)
       val serializer = serialization.findSerializerFor(messageEnvalop)

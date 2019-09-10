@@ -2,7 +2,7 @@ package HashDb
 
 import scala.collection.mutable.ListBuffer
 
-class MessageBEntry(
+case class MessageBEntry(
     attributeIndex: Int,
     originPlace: String,
-    listBuffer: Option[ListBuffer[MessageBEntry]] = None)
+    var listBuffer: Option[ListBuffer[MessageBEntry]] = None)

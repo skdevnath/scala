@@ -12,3 +12,11 @@ package Message
  */
 @SerialVersionUID(100L)
 case class MessageB(attributeIndex: Int, origin: String) extends Serializable
+
+object MessageB {
+  def toString(messageB: MessageB) = {
+    val stringBuilder = StringBuilder.newBuilder
+    stringBuilder.append(s"\n{ attributeIndex: ${messageB.attributeIndex}, origin: ${messageB.origin}}")
+    stringBuilder.toString
+  }
+}

@@ -1,8 +1,8 @@
 package HashDb
 
-import com.sun.net.httpserver.Authenticator.Failure
-import com.sun.tools.javac.comp.Infer.GraphStrategy.NodeNotFoundException
+import Message.{MessageA, MessageB}
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -35,17 +35,20 @@ object EventProcessor {
           messageAEventHashMap(messageAEvent.attributeIndex) = messageAEvent
           Try(messageBHashMap(messageAEvent.attributeIndex)) match {
             case Success(foundBEntry) =>
-              println(s"{\t\"group\": ${foundAEntry.group},")
-              println(s"\n\t\"eventId\": ${foundAEntry.eventId},")
-              println(s"\n\t\"originPlace: ${foundBEntry.originPlace}")
+              println(s"{\tgroup: ${foundAEntry.group},")
+              println(s"\n\teventId: ${foundAEntry.eventId},")
+              println(s"\n\toriginPlace: ${foundBEntry.originPlace}")
               println("}")
             case Failure(f) =>
               messageAEvent.listBuffer = foundAEntry.listBuffer
-              messageAEvent.listBuffer += messageAEvent
+              messageAEvent.listBuffer.foreach(_ += messageAEvent)
+              if (!messageAEvent.listBuffer.isDefined) {
+                messageAEvent.listBuffer = Some(ListBuffer(messageAEvent))
+              }
               foundAEntry.listBuffer = None
           }
 
-        case Failure(f) => println(s"Failure: ${f}") //Sandip:
+        case Failure(f) =>
           /*
            * 1. Make new entry as hash entry.
            * 2. Look into MessageB HashMap.
@@ -57,23 +60,33 @@ object EventProcessor {
           messageAEventHashMap(messageAEvent.attributeIndex) = messageAEvent
           Try(messageBHashMap(messageAEvent.attributeIndex)) match {
             case Success(foundBEntry) =>
-              foundBEntry.listBuffer.reverse.foreach { bEntry =>
-                println(s"{\t\"group\": ${bEntry.group},")
-                println(s"\n\t\"eventId\": ${bEntry.eventId},")
-                println(s"\n\t\"originPlace: ${bEntry.originPlace}")
-                println("}")
+              foundBEntry.listBuffer.foreach { x =>
+                x.reverse.foreach { bEntry =>
+                  println(s"{\tgroup: ${messageAEvent.group},")
+                  println(s"\teventId: ${messageAEvent.eventId},")
+                  println(s"\toriginPlace: ${bEntry.originPlace}")
+                  println("}")
+                }
               }
               foundBEntry.listBuffer = None
             case Failure(f) =>
-              messageAEvent.listBuffer += messageAEvent
+              messageAEvent.listBuffer.foreach(_ += messageAEvent)
+              if (!messageAEvent.listBuffer.isDefined) {
+                messageAEvent.listBuffer = Some(ListBuffer(messageAEvent))
+              }
           }
       }
     }
     messageAEventHashMap
   }
 
+
   def processMessage(messageB: MessageB): Unit = {
-    messageBTry = Try(messageBHashMap(messageB.attributeIndex))
+
+    val messageBEntry = MessageBEntry(attributeIndex = messageB.attributeIndex, originPlace = messageB.origin)
+
+    val messageBTry = Try(messageBHashMap(messageB.attributeIndex))
+
     messageBTry match {
       case Success(foundBEntry) =>
          /*
@@ -83,19 +96,23 @@ object EventProcessor {
           * 4. If entry is not found in A then copy ref of foundBEntry.listBuffer to new entry messageB.listBuffer.
           *    Null out foundEntry.listBuffer. Append new entry(messageAEvent) to messageAEvent.listBuffer.
           */
-        messageBHashMap(messageB.attributeIndex) = messageB
+        messageBHashMap(messageB.attributeIndex) = messageBEntry
         Try(messageAEventHashMap(messageB.attributeIndex)) match {
           case Success(foundAEntry) =>
-            println(s"{\t\"group\": ${foundAEntry.group},")
-            println(s"\n\t\"eventId\": ${foundAEntry.eventId},")
-            println(s"\n\t\"originPlace: ${foundBEntry.originPlace}")
+            println(s"{")
+            println(s"\tgroup: ${foundAEntry.group},")
+            println(s"\teventId: ${foundAEntry.eventId},")
+            println(s"\toriginPlace: ${foundBEntry.originPlace}")
             println("}")
           case Failure(f) =>
-            messageB.listBuffer = foundBEntry.listBuffer
-            messageB.listBuffer += messageB
+            messageBEntry.listBuffer = foundBEntry.listBuffer
+            messageBEntry.listBuffer.foreach(_ += messageBEntry)
+            if (!messageBEntry.listBuffer.isDefined) {
+              messageBEntry.listBuffer = Some(ListBuffer(messageBEntry))
+            }
             foundBEntry.listBuffer = None
         }
-      case Failure(f) => println(s"Failure: ${f}") //Sandip:
+      case Failure(f) =>
         /*
          * 1. Make new entry as hash entry.
          * 2. Look into MessageA HashMap.
@@ -104,18 +121,24 @@ object EventProcessor {
          * 5. Once all elements of MessageAEntry.listBuffer over. Clear it MessageBEntry.listBuffer = None.
          * 6. If entry not found in A, then add this message only messageB.listBuffer
          */
-        messageBHashMap(messageB.attributeIndex) = messageB
+        messageBHashMap(messageB.attributeIndex) = messageBEntry
         Try(messageAEventHashMap(messageB.attributeIndex)) match {
           case Success(foundAEntry) =>
-            foundAEntry.listBuffer.reverse.foreach { aEntry =>
-              println(s"{\t\"group\": ${aEntry.group},")
-              println(s"\n\t\"eventId\": ${aEntry.eventId},")
-              println(s"\n\t\"originPlace: ${messageB.originPlace}")
-              println("}")
+            foundAEntry.listBuffer.foreach{ x =>
+              x.reverse.foreach { aEntry =>
+                println("{")
+                println(s"\tgroup: ${aEntry.group},")
+                println(s"\n\teventId: ${aEntry.eventId},")
+                println(s"\n\toriginPlace: ${messageBEntry.originPlace}")
+                println("}")
+              }
             }
-            foundAEntry.listBuffer = Node
+            foundAEntry.listBuffer = None
           case Failure(f)  =>
-            messageB.listBuffer += messageB
+            messageBEntry.listBuffer.foreach(_ += messageBEntry)
+            if (!messageBEntry.listBuffer.isDefined) {
+              messageBEntry.listBuffer = Some(ListBuffer(messageBEntry))
+            }
         }
 
 
