@@ -1,4 +1,4 @@
-package chatapp.client
+package sandip.client
 
 import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorSystem, Kill, Props}
@@ -31,11 +31,15 @@ class ClientActor(address: InetSocketAddress, actorSystem: ActorSystem) extends 
           val serialization = SerializationExtension(Client.system)
           val serializer = serialization.findSerializerFor(MessageEnvelope)
           // Turn it back into an object
-          val messageEnvalop = maybeT[MessageEnvelope](serializer.fromBinary(data.toByteBuffer.array(), manifest = Some(classOf[MessageEnvelope])))
+          val messageEnvalopOpt = maybeT[MessageEnvelope](serializer.fromBinary(data.toByteBuffer.array(), manifest = Some(classOf[MessageEnvelope])))
 
           var respStr = StringBuilder.newBuilder
-          messageEnvalop.foreach(x => x.messagesA.foreach(a => respStr.append(MessageA.toString(a))))
+          messageEnvalopOpt.foreach(x => x.messagesA.foreach(a => respStr.append(MessageA.toString(a))))
           println("Server response:" + respStr)
+          messageEnvalopOpt.foreach { messageEnvalop =>
+            messageEnvalop.messagesA.foreach(a => EventProcessor.processMessage(a))
+            messageEnvalop.messagesB.foreach(b => EventProcessor.processMessage(b))
+          }
         case _: ConnectionClosed =>
           connection ! "connection closed"
           context stop self
