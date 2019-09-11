@@ -1,0 +1,15 @@
+[
+  {
+    "group": "UnitTestPart#2",
+    "events": [
+      {
+        "eventId": 88,
+        "attributeIndex": 60
+      },
+      {
+        "eventId": 99,
+        "attributeIndex": 62
+      }
+    ]
+  }
+]

@@ -9,17 +9,13 @@ import akka.util.ByteString
 
 class ConnectionManager(address: String, port: Int) extends Actor {
   import context.system
+  import MessageReader._
   val inetSocketAddress = new InetSocketAddress(address, port)
   IO(Tcp) ! Bind(self, inetSocketAddress)
 
   override def receive: Receive = {
     case Bound(local) =>
       println(s"Server started on $local")
-      // Sandip: remove following
-      val messagesA = MessageReader.getMessageA
-      messagesA.foreach(a => println(MessageA.toString(a)))
-      val messagesB = MessageReader.getMessageB
-      messagesB.foreach(b => println(MessageB.toString(b)))
 
     case Connected(remote, local) =>
       println("Connected")
@@ -30,23 +26,39 @@ class ConnectionManager(address: String, port: Int) extends Actor {
 }
 
 class ConnectionHandler extends Actor {
+  import MessageReader._
   override def receive: Actor.Receive = {
     case Received(data) =>
       val decoded = data.utf8String
       println("Server: data rx:" + decoded)
-      val messagesA = MessageReader.getMessageA
-      val messagesB = MessageReader.getMessageB
-      val messageEnvalop = MessageEnvelope(messagesA = messagesA.toSeq, messagesB = messagesB.toSeq)
+      var messageEnvalop = MessageEnvelope(messagesA = readMessageAFromFile(messageAUnitTest1Part1Filename), messagesB = readMessageBFromFile(messageBUnitTest1Part1Filename))
+      serializeAndSendToSender(messageEnvalop)
 
-      val serialization = SerializationExtension(Server.system)
-      val serializer = serialization.findSerializerFor(messageEnvalop)
-      val bytes = serializer.toBinary(messageEnvalop)
+      /* Now send 2nd sets of messages first B and then A*/
+      messageEnvalop = MessageEnvelope(messagesB = readMessageBFromFile(messageBUnitTest1Part2Filename))
+      serializeAndSendToSender(messageEnvalop)
 
-      sender() ! Write(ByteString(bytes))
-     // sender() ! Write(ByteString(s"You told us: $decoded"))
+      messageEnvalop = MessageEnvelope(messagesA = readMessageAFromFile(messageAUnitTest1Part2Filename))
+      serializeAndSendToSender(messageEnvalop)
     case message: ConnectionClosed =>
       println("Connection closed")
       context stop self
+  }
+
+  private def serializeAndSendToSender(messageEnvelope: MessageEnvelope): Unit = {
+    val serialization = SerializationExtension(Server.system)
+    val serializer = serialization.findSerializerFor(messageEnvelope)
+    var bytes = serializer.toBinary(messageEnvelope)
+
+    // Print msg for debug purpose
+    println("\nSending messages:")
+    println("MessageA:")
+    messageEnvelope.messagesA.foreach(a => println(MessageA.toString(a)))
+    println("MessageB:")
+    messageEnvelope.messagesB.foreach(b => println(MessageB.toString(b)))
+
+
+    sender() ! Write(ByteString(bytes))
   }
 }
 

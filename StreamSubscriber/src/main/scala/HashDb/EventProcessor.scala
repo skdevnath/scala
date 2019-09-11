@@ -77,7 +77,6 @@ object EventProcessor {
           }
       }
     }
-    messageAEventHashMap
   }
 
 
@@ -140,8 +139,6 @@ object EventProcessor {
               messageBEntry.listBuffer = Some(ListBuffer(messageBEntry))
             }
         }
-
-
     }
   }
 }
